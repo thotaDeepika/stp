@@ -1,0 +1,37 @@
+nanocorp
+
+
+
+
+
+http://ip:port
+login
+
+
+1st challenge
+
+--------
+<script>alert(1)</script>
+--------
+
+2nd challenge
+
+----------
+go to profile 
+display name
+paste this
+<b>bold</b><img src=x onerror=alert('Stored-XSS')>
+save changes 
+------------
+
+
+3rd challenge
+
+-----------
+create 2 accounts
+place order from both accounds 
+got to any account http:ip:port/order/id
+id here will be the other account order number nd u can access it
+--------------
+
+
