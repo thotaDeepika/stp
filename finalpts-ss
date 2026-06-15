@@ -1,0 +1,19 @@
+SQL Injection - unsanitised input
+
+Try 	 	
+	 	
+admin" OR "1"="1
+
+Idk question could be one of several
+
+End of document
+
+Cross Site Scripting - Injection reflected XSS
+
+Identify an unvalidated search input field within the Security Shepherd interface and execute arbitrary JavaScript to reveal the module confirmation string.
+    • Step 1: Accessed the Security Shepherd platform instance at https://192.168.105.113:45486 and opened the Cross Site Scripting 1 module workspace.
+    • Step 2: Input a broken HTML image tag element containing an active event handling attribute into the main search box container:
+    • HTML
+<img src=x onerror=alert(document.domain)>
+    • Step 3: Clicked Search, forcing the browser layout context to fail the arbitrary image source resolution and automatically execute the fallback script callback alert popup.
+    • Step 4: Closed the dialog notification frame and successfully retrieved the newly generated cryptographic Result Key displayed within the refreshed search results container interface.
