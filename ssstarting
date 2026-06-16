@@ -1,0 +1,191 @@
+Here is the complete, definitive deployment guide for running **OWASP Security Shepherd** on **WSL** (Ubuntu 24.04 noble) with **Docker Compose**, fixing common Java version pitfalls, and setting up **Burp Suite** via WSLg.
+
+Save this document or follow it step-by-step to recreate or repair your environment easily.
+
+---
+
+# OWASP Security Shepherd & Burp Suite on WSL: Complete Deployment Guide
+
+This document outlines the complete setup from scratch, including handling the dynamic installation authentication tokens, standard credentials, database links, and solving your target modules.
+
+---
+
+## Part 1: Environment Prerequisites & Java Configuration
+
+Ubuntu 24.04 defaults to Java 21, but Security Shepherd requires **Java 17 (OpenJDK 17)** to compile the web application component successfully.
+
+### Step 1: Install System Dependencies
+
+Open your WSL terminal and execute the following to update your system and install necessary packages (avoiding conflicting legacy Docker tools):
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y git maven openjdk-17-jdk docker-compose-plugin
+
+```
+
+### Step 2: Force the Java 17 Compiler Environment
+
+To prevent the `Fatal error compiling: error: release version 17 not supported` Maven error, explicitly configure your terminal session paths to link directly to Java 17:
+
+```bash
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+
+```
+
+> 🔍 **Verify:** Run `java -version` and `javac -version` to confirm that **17.x.x** is displayed before executing the build engine.
+
+---
+
+## Part 2: Project Build & Compilation Workflow
+
+### Step 1: Initialize Workspace and Clone Source Code
+
+```bash
+mkdir -p ~/ss && cd ~/ss
+git clone https://github.com/OWASP/SecurityShepherd.git
+cd SecurityShepherd
+
+```
+
+### Step 2: Clean and Compile using Maven
+
+Run the profile compiler configuration to compile target files and construct the specific configuration deployment dependencies:
+
+```bash
+mvn -Pdocker clean install -DskipTests
+
+```
+
+Wait for the terminal to print out a bright green **`BUILD SUCCESS`** status bar.
+
+---
+
+## Part 3: Deploying the Container Fabric
+
+### Step 1: Bring the Stack Online
+
+Spin up the background service workers (Web Application, MariaDB, and MongoDB) inside your environment:
+
+```bash
+docker compose up -d
+
+```
+
+### Step 2: Inspect Container Port Mapping
+
+To verify that your services are mapping to network interface ports cleanly, check the process states:
+
+```bash
+docker compose ps
+
+```
+
+The printout will show that the primary web container (`web`) is actively bound directly to standard host web ports:
+
+* `0.0.0.0:80->8080/tcp` (Standard HTTP)
+* `0.0.0.0:443->8443/tcp` (Secure HTTPS)
+
+---
+
+## Part 4: Dynamic Database Linking & Setup Page Wizard
+
+Open your Windows web browser and go to **`https://localhost`** (accept the self-signed certificate warning to proceed to `setup.jsp`).
+
+> ⚠️ **Crucial Rule on Auth Tokens vs Passwords:** The system database password (`CowSaysMoo`) stays **consistent** because it is coded inside your `.env` configuration file. However, every single time you spin down the container environment with `docker compose down -v` or rebuild it, the entry validation file **regenerates a completely unique authentication token** that you must extract manually.
+
+### Step 1: Retrieve the Current Authentication Token
+
+Run this in your WSL terminal to print the active token sequence directly from the virtual filesystem:
+
+```bash
+docker compose exec web cat /usr/local/tomcat/conf/SecurityShepherd.auth
+
+```
+
+Copy the long output string exactly.
+
+### Step 2: Input the Database Credentials Matrix
+
+Fill out the on-screen configuration form using these exact settings:
+
+* **Hostname:** `db` *(This points to the internal Docker container name network)*
+* **Port:** `3306`
+* **DB Username:** `root`
+* **DB Password:** `CowSaysMoo` *(Do not use "password", use the custom string from your `.env` config file)*
+* **Override Databases:** `Fresh Database`
+* **Authentication Token:** *[Paste the dynamic token code retrieved in Step 1]*
+
+Click **Submit**. The wizard will connect to MariaDB, format table indexes, and automatically forward you to the core web login screen.
+
+---
+
+## Part 5: Launching & Configuring Your Practice Targets
+
+### Step 1: Access System Dashboard
+
+* **URL:** `https://localhost/login.jsp`
+* **Default Administrative Username:** `admin`
+* **Default Administrative Password:** `password` *(Change this immediately on your first login prompt)*
+
+### Step 2: Enable Open Floor Mode
+
+1. Look at the left sidebar panel interface and navigate to **Admin Desk**.
+2. Select **Layout Settings**.
+3. Toggle the layout option from "Lessons" over to **Open Floor Mode**.
+
+> This fully removes game tracking path restrictions, unlocking all specific practice modules immediately.
+
+### Step 3: Map Out Your Target Assignments
+
+Go straight to the challenges tab workspace to practice your targeted assignments:
+
+1. **Cross-Site Request Forgery:** Under CSRF modules, select **CSRF 1** and **CSRF 2** to learn request token subversion tactics.
+2. **SQL Injection:** Look for **SQL Injection 1** (auth bypass tricks) and **SQL Injection 2 / 3** to construct database queries to retrieve the protected database keys.
+3. **Cross-Site Scripting:** Target **Reflected XSS 1** and **Reflected XSS 2** to practice payload text filter validation bypasses inside the browser input parameters.
+
+---
+
+## Part 6: Setting Up Burp Suite with WSL Integration
+
+Since Security Shepherd is isolated within a Docker virtual network mesh inside Linux, the easiest way to perform request tampering is to run Burp Suite inside WSL directly using native WSLg GUI support.
+
+### Step 1: Install and Launch Burp Suite
+
+Run this in a clean terminal window inside your WSL workspace:
+
+```bash
+# Download the native Linux installer build script
+wget -O burpsuite.sh "https://portswigger.net/burp/releases/startdownload?product=community&version=2024.2.1&type=Linux"
+
+# Grant operational execution permissions and launch it
+chmod +x burpsuite.sh
+./burpsuite.sh
+
+```
+
+Follow the graphical install path wizard. Once finished, run this command anywhere in your WSL terminal to launch the interface natively on your Windows Desktop screen:
+
+```bash
+BurpSuiteCommunity
+
+```
+
+### Step 2: Intercepting Traffic Without Proxy Configuration Issues
+
+1. Inside the Burp Suite interface, navigate up to the **Proxy** tab group -> open the **Intercept** screen block.
+2. Click the native **Open Browser** button action. This fires up an isolated Chromium browser that routes securely through Burp's local proxy pipeline automatically.
+3. In this browser window, type: `https://localhost` (or your absolute WSL IP address).
+4. Turn **Intercept is ON** to start stopping, inspecting, and modifying your injection payloads live before they hit your Security Shepherd container.
+
+---
+
+## Core Maintenance Commands Reference Cheatsheet
+
+Run these utility control blocks from inside your `~/ss/SecurityShepherd` workspace path:
+
+* **Stop and Purge Container State:** `docker compose down -v` *(use this if your DB locks up or you want a fresh start)*
+* **Restart Existing Container Stack:** `docker compose down && docker compose up -d`
+* **Real-time Core Application Logs:** `docker compose logs web --tail=100 -f`
+* **Real-time Database Performance Logs:** `docker compose logs db --tail=100 -f`
